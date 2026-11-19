@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>洛阳 2025 年度旅游数据可视化分析</title>
+<script src="echarts.min.js"></script>
+<script src="china-geo.js"></script>
+<style>
+  :root {
+    --peony: #c0392b;      /* 牡丹红 */
+    --peony-light: #e26a5b;
+    --gold: #d9a441;       /* 古都金 */
+    --ink: #2b2b2b;
+    --muted: #8a8a8a;
+    --bg: #f5f2ec;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  header {
+    background: linear-gradient(135deg, #5c1a12 0%, #8a2f20 45%, #b3541e 100%);
+    color: #fff;
+    padding: 40px 24px 34px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: "洛";
+    position: absolute;
+    right: 4%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 180px;
+    font-family: "STKaiti", "KaiTi", serif;
+    color: rgba(255,255,255,0.06);
+    line-height: 1;
+  }
+  header h1 { font-size: 30px; letter-spacing: 4px; font-weight: 700; }
+  header .subtitle { margin-top: 10px; font-size: 15px; color: rgba(255,255,255,0.85); letter-spacing: 1px; }
+  header .tags { margin-top: 14px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  header .tags span {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .kpi {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    border-top: 4px solid var(--gold);
+    text-align: center;
+  }
+  .kpi .num { font-size: 30px; font-weight: 700; color: var(--peony); }
+  .kpi .num small { font-size: 14px; color: var(--muted); font-weight: 400; }
+  .kpi .label { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+  .card.wide { grid-column: 1 / -1; }
+  .card h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #3a3a3a;
+    padding-left: 12px;
+    border-left: 4px solid var(--peony);
+    margin-bottom: 6px;
+  }
+  .card h2 .idx {
+    display: inline-block;
+    background: var(--peony);
+    color: #fff;
+    font-size: 12px;
+    width: 22px; height: 22px;
+    line-height: 22px; text-align: center;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: 1px;
+  }
+  .chart { width: 100%; height: 360px; }
+  .chart.tall { height: 460px; }
+  .insight {
+    margin-top: 12px;
+    background: #fdf6ee;
+    border-left: 3px solid var(--gold);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #6b4f23;
+  }
+  .insight b { color: var(--peony); }
+
+  footer {
+    max-width: 1280px; margin: 10px auto 40px; padding: 0 24px;
+    color: var(--muted); font-size: 12px; text-align: center;
+  }
+  footer .note { margin-top: 6px; color: #b08a5a; }
+
+  @media (max-width: 860px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>洛阳 2025 年度旅游数据可视化分析</h1>
+  <div class="subtitle">千年古都 · 牡丹花城 —— 客流趋势 · 淡旺季 · 景区排行 · 客源结构分析</div>
+  <div class="tags">
+    <span>月度客流趋势</span><span>淡季 / 旺季</span><span>景区排行</span>
+    <span>客源省份</span><span>来源结构</span><span>节假日拉动</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="kpis">
+    <div class="kpi"><div class="num">1831<small> 万人次</small></div><div class="label">全年接待游客总量</div></div>
+    <div class="kpi"><div class="num">4 月<small> 262 万</small></div><div class="label">全年最旺月份（牡丹花会）</div></div>
+    <div class="kpi"><div class="num">龙门石窟<small> 426 万</small></div><div class="label">旅游量最大景区</div></div>
+    <div class="kpi"><div class="num">河南省<small> 486 万</small></div><div class="label">最大客源省份</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card wide">
+      <h2><span class="idx">1</span>全年月度客流趋势 · 淡旺季识别</h2>
+      <div id="chart-monthly" class="chart"></div>
+      <div class="insight"><b>结论：</b>洛阳旅游全年呈「双峰」结构——4 月（262 万）与 10 月（242 万）为两大峰值，分别对应<b>中国洛阳牡丹文化节</b>与<b>国庆黄金周</b>；5 月（218 万）与暑期 7–8 月（168/178 万）次之。<b>旺季</b>为 3 月下旬–5 月、7–8 月、10 月；<b>淡季</b>为 11 月–次年 2 月（1 月仅 85 万、12 月 82 万），春节（2 月）形成一次小高峰。牡丹花会是最强拉动因素。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="idx">2</span>客流来源结构（省内 / 省外 / 入境）</h2>
+      <div id="chart-source" class="chart"></div>
+      <div class="insight"><b>结论：</b>国内省外游客 1240 万（占比 <b>67.7%</b>）为主体，河南省内 486 万（26.5%），入境游客 105 万（仅 <b>5.7%</b>）。说明洛阳是全国性旅游目的地，吸引力远超本地市场；入境游占比偏低，国际影响力仍有提升空间。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="idx">3</span>景区旅游量排行</h2>
+      <div id="chart-scenic" class="chart tall"></div>
+      <div class="insight"><b>结论：</b>旅游量最大的景区是<b>龙门石窟（426 万）</b>，稳居龙头；白马寺（268 万）、老君山（212 万）分列二、三位。头部景区效应明显，龙门石窟一家的游客量是第十名关林（96 万）的 4.4 倍。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="idx">4</span>客源省份空间分布</h2>
+      <div id="chart-map" class="chart tall"></div>
+      <div class="insight"><b>结论：</b>客源高度集中在<b>河南本省及周边省份</b>（山东、山西、河北、陕西），呈现典型的「距离衰减」规律——离洛阳越近、交通越便利的省份游客越多，远程市场（华南、西南）贡献有限。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="idx">5</span>客源省份排行</h2>
+      <div id="chart-province" class="chart tall"></div>
+      <div class="insight"><b>结论：</b>旅游人数最多的省份是<b>河南省（486 万）</b>，本省是绝对主力；其后依次为山东、山西、河北、陕西等邻近省份。省内 + 周边六省合计贡献约 75% 客流，远距离市场待进一步开拓。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="idx">6</span>节假日 vs 平日客流对比</h2>
+      <div id="chart-holiday" class="chart"></div>
+      <div class="insight"><b>结论：</b>节庆对客流拉动极为显著——<b>牡丹文化节（388 万）</b>、国庆（240 万）、五一（196 万）为三大高峰，均远超平日月均（110 万）。牡丹文化节是全年最大的客流爆发点，是洛阳最具辨识度的旅游 IP。</div>
+    </div>
+
+    <div class="card">
+      <h2><span class="idx">7</span>主要景区游客量占比</h2>
+      <div id="chart-share" class="chart"></div>
+      <div class="insight"><b>结论：</b>龙门石窟占前十景区总量的 <b>22.8%</b>，前三名（龙门石窟、白马寺、老君山）合计占比 <b>48.4%</b>，接近一半。景区集中度高，头部景区是洛阳旅游的核心支撑，也提示其他景区需差异化发展以分散客流。</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>洛阳 2025 年度旅游数据可视化分析 · 课程期末作业</div>
+  <div class="note">部分数据来自模拟数据。</div>
+</footer>
+
+<script>
+const monthly = [
+  { name: '1月', value: 85,  type: '淡季' },
+  { name: '2月', value: 92,  type: '春节' },
+  { name: '3月', value: 120, type: '平季' },
+  { name: '4月', value: 262, type: '旺季' },
+  { name: '5月', value: 218, type: '旺季' },
+  { name: '6月', value: 142, type: '平季' },
+  { name: '7月', value: 168, type: '旺季' },
+  { name: '8月', value: 178, type: '旺季' },
+  { name: '9月', value: 130, type: '平季' },
+  { name: '10月', value: 242, type: '旺季' },
+  { name: '11月', value: 112, type: '平季' },
+  { name: '12月', value: 82,  type: '淡季' }
+];
+const scenic = [
+  { name: '龙门石窟', value: 426 },
+  { name: '白马寺', value: 268 },
+  { name: '老君山', value: 212 },
+  { name: '丽景门·十字街', value: 185 },
+  { name: '应天门', value: 168 },
+  { name: '洛邑古城', value: 145 },
+  { name: '明堂天堂', value: 138 },
+  { name: '王城公园', value: 122 },
+  { name: '洛阳博物馆', value: 112 },
+  { name: '关林', value: 96 }
+];
+const province = [
+  { name: '河南省', value: 486 },
+  { name: '山东省', value: 192 },
+  { name: '山西省', value: 148 },
+  { name: '河北省', value: 138 },
+  { name: '陕西省', value: 126 },
+  { name: '湖北省', value: 108 },
+  { name: '安徽省', value: 96 },
+  { name: '江苏省', value: 88 },
+  { name: '北京市', value: 72 },
+  { name: '广东省', value: 60 },
+  { name: '其他省份', value: 212 }
+];
+const source = [
+  { name: '国内省外', value: 1240 },
+  { name: '河南省内', value: 486 },
+  { name: '入境游客', value: 105 }
+];
+const holiday = [
+  { name: '春节假期', value: 92,  type: '普通节日' },
+  { name: '清明假期', value: 58,  type: '普通节日' },
+  { name: '牡丹文化节', value: 388, type: '核心IP' },
+  { name: '五一假期', value: 196, type: '核心IP' },
+  { name: '端午假期', value: 46,  type: '普通节日' },
+  { name: '中秋假期', value: 42,  type: '普通节日' },
+  { name: '国庆假期', value: 240, type: '核心IP' },
+  { name: '平日月均', value: 110, type: '平日' }
+];
+
+const TYPE_COLOR = { '旺季': '#c0392b', '平季': '#e0a03c', '淡季': '#8fa3b8', '春节': '#e0a03c' };
+const charts = [];
+
+// 1. 月度趋势
+(function () {
+  const c = echarts.init(document.getElementById('chart-monthly'));
+  charts.push(c);
+  const avg = 1831 / 12;
+  c.setOption({
+    grid: { left: 50, right: 50, top: 60, bottom: 30 },
+    tooltip: { trigger: 'axis', formatter: p => `${p[0].name}<br/>游客量：<b>${p[0].value} 万人次</b>` },
+    xAxis: { type: 'category', data: monthly.map(d => d.name), axisLine: { lineStyle: { color: '#bbb' } } },
+    yAxis: { type: 'value', name: '万人次', nameTextStyle: { color: '#888' }, splitLine: { lineStyle: { type: 'dashed' } } },
+    series: [{
+      name: '游客量', type: 'bar', barWidth: '52%',
+      data: monthly.map(d => ({ value: d.value, itemStyle: { color: TYPE_COLOR[d.type] } })),
+      markLine: {
+        symbol: 'none', silent: true,
+        data: [{ yAxis: avg, label: { formatter: '月均 ' + avg.toFixed(0) + ' 万', position: 'insideEndTop' }, lineStyle: { color: '#d9a441', type: 'dashed' } }]
+      },
+      label: { show: true, position: 'top', color: '#666', fontSize: 11 }
+    }]
+  });
+})();
+
+// 2. 来源结构
+(function () {
+  const c = echarts.init(document.getElementById('chart-source'));
+  charts.push(c);
+  c.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}<br/>{c} 万人次（{d}%）' },
+    legend: { bottom: 0 },
+    color: ['#c0392b', '#d9a441', '#7f8fa6'],
+    series: [{
+      type: 'pie', radius: ['42%', '68%'], center: ['50%', '46%'],
+      itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+      label: { formatter: '{b}\n{d}%', fontSize: 12 },
+      data: source
+    }]
+  });
+})();
+
+// 3. 景区排行
+(function () {
+  const c = echarts.init(document.getElementById('chart-scenic'));
+  charts.push(c);
+  const data = [...scenic].sort((a, b) => a.value - b.value);
+  c.setOption({
+    grid: { left: 110, right: 40, top: 10, bottom: 30 },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => `${p[0].name}<br/>游客量：<b>${p[0].value} 万人次</b>` },
+    xAxis: { type: 'value', name: '万人次', splitLine: { lineStyle: { type: 'dashed' } } },
+    yAxis: { type: 'category', data: data.map(d => d.name), axisLine: { lineStyle: { color: '#bbb' } } },
+    series: [{
+      type: 'bar', barWidth: '60%',
+      data: data.map(d => ({ value: d.value, itemStyle: { color: d.name === '龙门石窟' ? '#c0392b' : '#d9a441', borderRadius: [0, 4, 4, 0] } })),
+      label: { show: true, position: 'right', color: '#666', fontSize: 11 }
+    }]
+  });
+})();
+
+// 4. 省份地图（数据已内嵌，无需联网加载）
+(function () {
+  const c = echarts.init(document.getElementById('chart-map'));
+  charts.push(c);
+  echarts.registerMap('china', window.CHINA_GEO);
+  const mapData = province.filter(p => p.name !== '其他省份');
+  c.setOption({
+    tooltip: {
+      trigger: 'item',
+      formatter: p => p.value ? `${p.name}<br/>游客量：<b>${p.value} 万人次</b>` : `${p.name}<br/>暂无数据`
+    },
+    visualMap: {
+      min: 0, max: 500, left: 20, bottom: 10,
+      text: ['高', '低'], calculable: true,
+      inRange: { color: ['#fde4d0', '#e8997c', '#c0392b'] }
+    },
+    series: [{
+      type: 'map', map: 'china', roam: false,
+      label: { show: false },
+      emphasis: { label: { show: true, color: '#333' }, itemStyle: { areaColor: '#f5d0a9' } },
+      itemStyle: { borderColor: '#fff', borderWidth: 1 },
+      data: mapData
+    }]
+  });
+})();
+
+// 5. 省份排行
+(function () {
+  const c = echarts.init(document.getElementById('chart-province'));
+  charts.push(c);
+  const data = [...province].sort((a, b) => a.value - b.value);
+  c.setOption({
+    grid: { left: 90, right: 40, top: 10, bottom: 30 },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => `${p[0].name}<br/>游客量：<b>${p[0].value} 万人次</b>` },
+    xAxis: { type: 'value', name: '万人次', splitLine: { lineStyle: { type: 'dashed' } } },
+    yAxis: { type: 'category', data: data.map(d => d.name), axisLine: { lineStyle: { color: '#bbb' } } },
+    series: [{
+      type: 'bar', barWidth: '60%',
+      data: data.map(d => ({ value: d.value, itemStyle: { color: d.name === '河南省' ? '#c0392b' : '#e0a03c', borderRadius: [0, 4, 4, 0] } })),
+      label: { show: true, position: 'right', color: '#666', fontSize: 11 }
+    }]
+  });
+})();
+
+// 6. 节假日对比
+(function () {
+  const c = echarts.init(document.getElementById('chart-holiday'));
+  charts.push(c);
+  const color = d => d.type === '核心IP' ? '#c0392b' : (d.type === '平日' ? '#8fa3b8' : '#e0a03c');
+  c.setOption({
+    grid: { left: 50, right: 30, top: 30, bottom: 60 },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: p => `${p[0].name}<br/>游客量：<b>${p[0].value} 万人次</b>` },
+    xAxis: { type: 'category', data: holiday.map(d => d.name), axisLabel: { rotate: 30, fontSize: 11 } },
+    yAxis: { type: 'value', name: '万人次', splitLine: { lineStyle: { type: 'dashed' } } },
+    series: [{
+      type: 'bar', barWidth: '55%',
+      data: holiday.map(d => ({ value: d.value, itemStyle: { color: color(d), borderRadius: [4, 4, 0, 0] } })),
+      label: { show: true, position: 'top', color: '#666', fontSize: 11 }
+    }]
+  });
+})();
+
+// 7. 景区占比（南丁格尔玫瑰图）
+(function () {
+  const c = echarts.init(document.getElementById('chart-share'));
+  charts.push(c);
+  c.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}<br/>{c} 万人次（{d}%）' },
+    legend: { type: 'scroll', bottom: 0, itemWidth: 12, itemHeight: 12 },
+    color: ['#c0392b', '#d95f4b', '#e08a4c', '#e0a03c', '#d9a441', '#c9a24a', '#a98f52', '#8a9a63', '#7f8fa6', '#9aa7b5'],
+    series: [{
+      type: 'pie', radius: ['28%', '72%'], center: ['50%', '46%'],
+      roseType: 'area',
+      itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 1 },
+      label: { formatter: '{b}', fontSize: 11 },
+      data: scenic
+    }]
+  });
+})();
+
+window.addEventListener('resize', () => charts.forEach(c => c.resize()));
+</script>
+</body>
+</html>
